@@ -2,8 +2,9 @@ import React, { ReactNode, useContext, useEffect, useState } from 'react';
 import NetworkState, { Factory } from '../../../../core/utils/resource';
 import { ApplicationEntity } from '../../domain/entity/application.entity';
 import { getApplications } from '../state/application-list.state';
-import { Link } from 'react-router-dom';
-import { Box, List, ListItem, ListItemText, Paper, Table, TableBody, TableCell, TableContainer, TableRow, Typography, styled } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, TableRow, Typography, styled } from '@mui/material';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 export interface ApplicationListProps {
     initialApplication: NetworkState<ApplicationEntity[]>
@@ -11,6 +12,8 @@ export interface ApplicationListProps {
 
 const ApplicationList: React.FC<{}> = (props) => {
     const [applicationState, setApplicationState] = useState<NetworkState<ApplicationEntity[]>>(Factory.createLoading);
+
+    let navigate = useNavigate();
 
     useEffect(
         () => {
@@ -29,7 +32,9 @@ const ApplicationList: React.FC<{}> = (props) => {
             case 'failed':
                 return (<div><h4>Could not load application list. Error Code: {applicationState.code}</h4></div>);
             case 'success':
-                return LoadedList({ applications: applicationState.response });
+                return LoadedList({ applications: applicationState.response, onSelect(application) {
+                    navigate(`/application/${application}`)
+                }, });
 
         }
     }
@@ -57,7 +62,8 @@ const ApplicationList: React.FC<{}> = (props) => {
 }
 
 interface LoadedListProps {
-    applications: ApplicationEntity[]
+    applications: ApplicationEntity[],
+    onSelect: (application: string) => void
 }
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
@@ -71,25 +77,35 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 
-const LoadedList: React.FC<LoadedListProps> = ({ applications }: LoadedListProps) => {
+const LoadedList: React.FC<LoadedListProps> = ({ applications, onSelect }: LoadedListProps) => {
 
-    return <TableContainer component={Paper}>
-        <Table aria-label="customized table">
-            <TableBody>
-                {applications.map((application) =>
-                    <StyledTableRow key={application.name}>
-                        <TableCell>
-                            <Link to={`/application/${application.name}`} >
-                                {application.name}
-                            </Link>
-                        </TableCell>
+    const columns: GridColDef[] = [
+        {
+            field: 'name',
+            headerName: 'Application Name',
+            editable: false,
+            flex: 1,
+          }
+    ];
 
-                    </StyledTableRow>
-                )}
-            </TableBody>
-        </Table>
-    </TableContainer>;
+    const rows = applications;
 
+    return <DataGrid
+        rows={rows}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 10,
+            },
+          },
+        }}
+        getRowId={(row: ApplicationEntity) => row.name}
+        rowSelection={false}
+        onRowClick={(row) => {
+            onSelect(row.row.name);
+        }}
+      />
 }
 
 export default ApplicationList;

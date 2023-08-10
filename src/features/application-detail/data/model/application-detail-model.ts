@@ -1,5 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
 import { ApplicationDetailDataEntity, ApplicationDetailEntity } from "../../domain/entity/application-detail.entity"
-
 export interface ApplicationDetailModel {
     ConsumedQuantity: string,
     Date: string,
@@ -16,6 +16,7 @@ export const toEntity = ( model: ApplicationDetailModel): ApplicationDetailDataE
     date.setFullYear(parseInt(year));
 
     return {
+        id : uuidv4(),
         timestamp: date.valueOf(),
         quantityConsumed: parseInt(model.ConsumedQuantity),
         serviceName: model.ServiceName

@@ -1,9 +1,10 @@
 import React, { Fragment, ReactNode, useContext, useEffect, useState } from 'react';
 import NetworkState, { Factory } from '../../../../core/utils/resource';
 import { getApplicationDetail } from '../state/application-detail.state';
-import { ApplicationDetailEntity } from '../../domain/entity/application-detail.entity';
-import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { ApplicationDetailDataEntity, ApplicationDetailEntity } from '../../domain/entity/application-detail.entity';
+import { Box, Typography } from '@mui/material';
 import { BarChart } from '@mui/x-charts';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { allMonths, getMonth } from '../../../../core/utils/date-util';
 
 interface ApplicationDetailProps {
@@ -143,31 +144,49 @@ const ApplicationUsageTable: React.FC<ApplicationUsageTableProps> = ({ applicati
         return `${date.getDate()}-${getMonth(date)}-${date.getFullYear()}`;
     }
 
+    const columns: GridColDef[] = [
+        {
+            field: 'timestamp',
+            headerName: 'Date',
+            editable: false,
+            valueFormatter: (value) => {
+                return formatDate(new Date(value.value))
+            }
+        },
+        {
+            field: 'serviceName',
+            headerName: 'Service Name',
+            editable: false,
+            flex: 1,
+        },
+        {
+            field: 'quantityConsumed',
+            headerName: 'Quantity Consumed',
+            editable: false,
+            width:200
+        }
+    ];
+
+    const rows = sortedData;
+
+
+
     return (
         <Fragment>
             <Typography variant="subtitle2" gutterBottom>Detailed logs for utilization:</Typography>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Service Name</TableCell>
-                            <TableCell>Usage</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {sortedData.map((data, index) => <TableRow
-                            key={`${data.serviceName}-${data.timestamp}-${data.quantityConsumed}-${index}`}
-                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                        >
-
-                            <TableCell>{formatDate(new Date(data.timestamp))}</TableCell>
-                            <TableCell>{data.serviceName}</TableCell>
-                            <TableCell>{data.quantityConsumed}</TableCell>
-                        </TableRow>)}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <DataGrid
+                rows={rows}
+                columns={columns}
+                initialState={{
+                    pagination: {
+                        paginationModel: {
+                            pageSize: 10,
+                        },
+                    },
+                }}
+                getRowId={(row: ApplicationDetailDataEntity) => row.id}
+                rowSelection={false}
+            />
         </Fragment>
     )
 }
